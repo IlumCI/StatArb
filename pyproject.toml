@@ -1,0 +1,38 @@
+[project]
+name = "statarb"
+version = "0.1.0"
+description = "Lead-lag statistical arbitrage on the Solana ecosystem"
+requires-python = ">=3.11"
+dependencies = [
+    "numpy>=1.26",
+    "pandas>=2.1",
+    "scipy>=1.11",
+    "pyarrow>=14",
+]
+
+[project.optional-dependencies]
+nn = ["torch>=2.0"]
+report = ["matplotlib>=3.8"]
+dev = ["pytest>=7", "ruff>=0.5"]
+
+[project.scripts]
+statarb = "statarb.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["statarb*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM"]
+ignore = ["E501", "B008"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = ["ignore::DeprecationWarning"]
