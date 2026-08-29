@@ -23,25 +23,29 @@ import pandas as pd
 from statarb.config import DEFAULT_ARTIFACT_DIR, Config
 from statarb.data.cache import load_universe
 from statarb.data.panel import build_panel
-from statarb.universe import average_dollar_volume, default_universe, static_tiers
+from statarb.universe import average_dollar_volume, get_market, static_tiers
 
 log = logging.getLogger("statarb")
 
 
 def _load_panel(cfg: Config, *, refresh: bool):
-    u = default_universe()
+    spec = get_market(cfg.market)
     bars = load_universe(
-        u.symbols, interval=cfg.data.interval, lookback=cfg.data.lookback,
+        spec.symbols, interval=cfg.data.interval, lookback=cfg.data.lookback,
         cache_dir=cfg.data.cache_dir, backend=cfg.data.backend, refresh=refresh,
     )
     return build_panel(
-        bars, leader=u.leader, followers=u.followers, interval=cfg.data.interval,
+        bars, leader=spec.leader, followers=spec.followers, interval=cfg.data.interval,
         min_cross_section_coverage=cfg.data.min_cross_section_coverage,
+        session_tz=spec.session_tz,
     )
 
 
 def _config(args) -> Config:
-    cfg = Config.load(args.config) if getattr(args, "config", None) else Config()
+    if getattr(args, "config", None):
+        cfg = Config.load(args.config)
+    else:
+        cfg = Config.for_market(getattr(args, "market", None) or "solana")
     port = {}
     if getattr(args, "notional", None):
         port["gross_notional"] = args.notional
@@ -60,8 +64,12 @@ def cmd_fetch(args) -> int:
     adv = average_dollar_volume(panel.close, panel.volume, cfg.signal.beta_window)
     desc = panel.describe()
     desc["tier"] = static_tiers(adv)
-    print(f"panel: {panel.close.shape[0]} bars x {panel.close.shape[1]} symbols")
+    print(f"market: {cfg.market} | panel: {panel.close.shape[0]} bars x {panel.close.shape[1]} symbols")
     print(f"range: {panel.index[0]} -> {panel.index[-1]}")
+    if panel.session_tz:
+        from statarb.data.sessions import session_summary  # noqa: PLC0415
+
+        print(f"sessions: {session_summary(panel.sessions)}")
     print(desc.to_string())
     return 0
 
@@ -198,6 +206,8 @@ def cmd_paper(args) -> int:
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="statarb", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--config", help="path to a saved JSON config")
+    p.add_argument("--market", choices=["solana", "equity"], default="solana",
+                   help="which universe to trade (default: solana)")
     p.add_argument("--verbose", action="store_true")
     p.add_argument("--no-refresh", action="store_true", help="use cached bars only, no network")
     sub = p.add_subparsers(dest="command", required=True)

@@ -90,17 +90,26 @@ def leader_features(
     leader_close: pd.Series,
     lags: tuple[int, ...],
     vol_window: int,
+    sessions: pd.Series | None = None,
 ) -> pd.DataFrame:
     """Causal leader features known at the close of each bar.
 
     Every column is a function of bars at or before ``t``. The intrabar (open-to-close)
     return is used rather than close-to-close because it is the move a trader could
     actually have observed completing within the bar.
+
+    When ``sessions`` is supplied, close-to-close returns spanning a session boundary
+    are dropped. The cumulative features then sum only genuine intraday moves: a
+    6-bar leader move never silently includes an overnight gap.
     """
     o = leader_open.where(leader_open > 0)
     c = leader_close.where(leader_close > 0)
     intrabar = np.log(c / o)
     c2c = np.log(c).diff()
+    if sessions is not None:
+        from statarb.data.sessions import mask_cross_session  # noqa: PLC0415
+
+        c2c = mask_cross_session(c2c.to_frame("r"), sessions)["r"]
 
     feats = {"leader_intrabar": intrabar, "leader_c2c": c2c}
     for k in lags:

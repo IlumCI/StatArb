@@ -19,6 +19,7 @@ import pandas as pd
 
 from statarb.config import SignalConfig
 from statarb.data.panel import Panel
+from statarb.data.sessions import mask_cross_session, tradable_entry_mask
 from statarb.features.leadlag import gate_mask, leader_features
 from statarb.features.micro import (
     amihud_illiquidity,
@@ -60,7 +61,7 @@ class Dataset:
     """Long-format features and targets plus the wide frames the backtest needs."""
 
     frame: pd.DataFrame          # MultiIndex (timestamp, symbol)
-    gate: pd.Series              # per-timestamp: leader move exceeded trailing quantile
+    gate: pd.Series              # per-timestamp: gated leader move AND round trip fits the session
     dollar_volume: pd.DataFrame  # wide, trailing mean dollar volume per bar
     leader_intrabar: pd.Series   # wide, leader open->close return per bar
     index: pd.DatetimeIndex
@@ -104,15 +105,23 @@ def build_dataset(panel: Panel, cfg: SignalConfig, *, with_targets: bool = True)
     open_ = panel.open[followers]
     volume = panel.volume[followers]
 
+    sessions = panel.sessions
+
     lead = leader_features(
         panel.leader_series("open"),
         panel.leader_series("close"),
         cfg.leader_lags,
         cfg.beta_window,
+        sessions=sessions,
     )
-    leader_c2c = np.log(panel.leader_series("close")).diff()
+    leader_c2c = mask_cross_session(
+        np.log(panel.leader_series("close")).diff().to_frame("r"), sessions
+    )["r"]
 
-    own_c2c = log_returns(close)
+    # Close-to-close returns spanning a session boundary are overnight gaps, not
+    # intraday moves. Nulling them keeps every rolling statistic below free of a
+    # jump the strategy could never have traded through.
+    own_c2c = mask_cross_session(log_returns(close), sessions)
     own_intrabar = intrabar_returns(open_, close)
 
     # Rolling beta of each follower on the leader, estimated on trailing data only and
@@ -153,14 +162,18 @@ def build_dataset(panel: Panel, cfg: SignalConfig, *, with_targets: bool = True)
             index=close.index, columns=followers,
         )
 
+    # A signal is only actionable if buying at the next open and selling
+    # holding_bars later stays inside the same session; otherwise the position is
+    # carried overnight and takes gap risk the strategy is not being paid for.
+    intraday_ok = tradable_entry_mask(sessions, entry_lag=1, holding_bars=cfg.holding_bars)
+
     if with_targets:
-        wide[TARGET_COLUMN] = forward_return(
-            open_, close, entry_lag=1, holding_bars=cfg.holding_bars
-        )
+        target = forward_return(open_, close, entry_lag=1, holding_bars=cfg.holding_bars)
+        wide[TARGET_COLUMN] = target.where(intraday_ok, other=np.nan)
         leader_fwd = forward_return(
             panel.open[[panel.leader]], panel.close[[panel.leader]],
             entry_lag=1, holding_bars=cfg.holding_bars,
-        )[panel.leader]
+        )[panel.leader].where(intraday_ok, other=np.nan)
         wide[LEADER_TARGET_COLUMN] = pd.DataFrame(
             np.repeat(leader_fwd.to_numpy()[:, None], len(followers), axis=1),
             index=close.index, columns=followers,
@@ -171,6 +184,7 @@ def build_dataset(panel: Panel, cfg: SignalConfig, *, with_targets: bool = True)
     gate = gate_mask(
         lead["leader_intrabar"], cfg.gate_window, cfg.gate_quantile, cfg.gate_min_periods
     )
+    gate = gate & intraday_ok
 
     return Dataset(
         frame=frame,

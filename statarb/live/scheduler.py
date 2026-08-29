@@ -30,7 +30,7 @@ from statarb.live.blotter import Blotter
 from statarb.models.baseline import LeadLagBaseline
 from statarb.portfolio.base import PortfolioConstructor
 from statarb.risk import apply_capacity, capacity_weight_cap, combine_masks, rolling_hawkes_state
-from statarb.universe import Universe, default_universe
+from statarb.universe import Universe, get_market
 
 log = logging.getLogger(__name__)
 
@@ -66,7 +66,9 @@ class LiveTrader:
         adapter: ExecutionAdapter | None = None,
     ):
         self.cfg = cfg
-        self.universe = universe or default_universe()
+        spec = get_market(cfg.market)
+        self.universe = universe or spec.universe
+        self.session_tz = spec.session_tz
         self.adapter = adapter or PaperAdapter()
         self.blotter = Blotter(cfg.live.blotter_path)
         self.state = LiveState.load(Path(cfg.live.state_path))
@@ -124,6 +126,7 @@ class LiveTrader:
             bars, leader=self.universe.leader, followers=self.universe.followers,
             interval=cfg.data.interval,
             min_cross_section_coverage=cfg.data.min_cross_section_coverage,
+            session_tz=self.session_tz,
         )
         target, dvol, last_bar = self._target_book(panel)
         prices = panel.close.iloc[-1]

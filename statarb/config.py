@@ -173,6 +173,7 @@ class LiveConfig:
 
 @dataclass(frozen=True)
 class Config:
+    market: str = "solana"
     data: DataConfig = field(default_factory=DataConfig)
     signal: SignalConfig = field(default_factory=SignalConfig)
     hawkes: HawkesConfig = field(default_factory=HawkesConfig)
@@ -196,9 +197,53 @@ class Config:
         Path(path).write_text(json.dumps(self.to_dict(), indent=2))
 
     @classmethod
+    def for_market(cls, market: str) -> Config:
+        """Defaults appropriate to a market's bar count, session structure and costs.
+
+        The Solana sample is 17.5k continuous hourly bars; the equity sample is 5.1k
+        bars spread over ~730 sessions of 7 bars each. Windows are therefore expressed
+        in trading time rather than copied across, or an equity "30 day" beta window
+        would silently span five months.
+        """
+        from statarb.universe import get_market  # noqa: PLC0415 - avoids import cycle
+
+        spec = get_market(market)
+        if market == "solana":
+            return cls(market=market)
+        if market == "equity":
+            bars_per_session = 7
+            sess = lambda n: n * bars_per_session  # noqa: E731 - local shorthand
+            return cls(
+                market=market,
+                signal=SignalConfig(
+                    beta_window=sess(50), beta_min_periods=sess(15),
+                    gate_window=sess(100), gate_min_periods=sess(35),
+                    gate_quantile=0.90, holding_bars=2,
+                ),
+                hawkes=HawkesConfig(
+                    jump_window=sess(100), jump_min_periods=sess(35),
+                    refit_every=sess(50), fit_window=sess(200),
+                ),
+                # Equity spreads are far tighter than crypto and fees are near zero;
+                # charging the crypto model here would reject a viable strategy.
+                costs=CostConfig(
+                    tier_half_spread_bp=(3.0, 8.0, 15.0, 30.0),
+                    taker_fee_bp=0.5,
+                    impact_coef_bp=20.0,
+                    max_impact_bp=120.0,
+                ),
+                portfolio=PortfolioConfig(bars_per_year=spec.bars_per_year),
+                backtest=BacktestConfig(
+                    train_bars=sess(200), test_bars=sess(50), embargo_bars=bars_per_session,
+                ),
+            )
+        raise ValueError(f"no default config for market {market!r}")
+
+    @classmethod
     def load(cls, path: str | Path) -> Config:
         raw = json.loads(Path(path).read_text())
         return cls(
+            market=raw.get("market", "solana"),
             data=DataConfig(**_paths(raw.get("data", {}), {"cache_dir"})),
             signal=SignalConfig(**_tuples(raw.get("signal", {}), {"leader_lags"})),
             hawkes=HawkesConfig(**_tuples(raw.get("hawkes", {}), {"mu_bounds", "alpha_bounds", "beta_bounds"})),

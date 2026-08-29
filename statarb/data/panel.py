@@ -36,6 +36,15 @@ class Panel:
     leader: str
     followers: tuple[str, ...]
     interval: str
+    #: Exchange timezone for session boundaries; None means continuously traded.
+    session_tz: str | None = None
+
+    @property
+    def sessions(self) -> pd.Series:
+        """Session label per bar. One constant session for continuous markets."""
+        from statarb.data.sessions import session_ids  # noqa: PLC0415 - avoids import cycle
+
+        return session_ids(self.index, tz=self.session_tz)
 
     @property
     def index(self) -> pd.DatetimeIndex:
@@ -66,6 +75,7 @@ class Panel:
             open=self.open[mask], high=self.high[mask], low=self.low[mask],
             close=self.close[mask], volume=self.volume[mask],
             leader=self.leader, followers=self.followers, interval=self.interval,
+            session_tz=self.session_tz,
         )
 
     def iloc(self, start: int, stop: int) -> Panel:
@@ -74,6 +84,7 @@ class Panel:
             low=self.low.iloc[start:stop], close=self.close.iloc[start:stop],
             volume=self.volume.iloc[start:stop],
             leader=self.leader, followers=self.followers, interval=self.interval,
+            session_tz=self.session_tz,
         )
 
     def describe(self) -> pd.DataFrame:
@@ -93,17 +104,33 @@ class Panel:
 
 
 def drop_partial_bar(frame: pd.DataFrame, interval: str) -> pd.DataFrame:
-    """Drop bars not aligned to the interval grid.
+    """Drop bars that do not sit on the venue's own bar grid.
 
-    Yahoo appends an in-progress bar stamped at the current wall-clock second. Trading
-    on it would mean acting on a partial bar, so it is removed by construction.
+    Yahoo appends an in-progress bar stamped at the current wall-clock second, and
+    trading on it would mean acting on a partial bar.
+
+    The grid is discovered rather than assumed. Crypto bars land on the hour, but a US
+    equity session opens at 09:30, so its hourly bars sit at :30 past and testing
+    against a floor-to-the-hour grid would discard every real bar. Taking the modal
+    offset within the interval finds whichever grid the venue actually uses, and the
+    ragged in-progress bar falls off it either way.
     """
     offset = _INTERVAL_TO_OFFSET.get(interval)
     if offset is None or frame.empty:
         return frame
+    step = int(pd.Timedelta(offset).total_seconds())
+    if step <= 0:
+        return frame
     idx = pd.DatetimeIndex(frame.index)
-    aligned = idx.floor(offset) == idx
-    return frame[aligned]
+    # Subtract-and-divide rather than reading the raw integers: a parquet round trip
+    # can hand back millisecond-resolution timestamps, and dividing those as if they
+    # were nanoseconds silently produces nonsense offsets.
+    epoch = pd.Timestamp("1970-01-01", tz="UTC")
+    local = idx if idx.tz is not None else idx.tz_localize("UTC")
+    seconds = ((local - epoch) // pd.Timedelta("1s")).to_numpy().astype("int64")
+    within = pd.Series(seconds % step)
+    grid = int(within.mode().iloc[0])
+    return frame[(within == grid).to_numpy()]
 
 
 def staleness(close: pd.DataFrame) -> pd.DataFrame:
@@ -123,6 +150,7 @@ def build_panel(
     followers: tuple[str, ...] | list[str],
     interval: str = "1h",
     min_cross_section_coverage: float = 0.6,
+    session_tz: str | None = None,
 ) -> Panel:
     """Align per-symbol bar frames onto one shared index.
 
@@ -157,4 +185,5 @@ def build_panel(
         open=frames["open"], high=frames["high"], low=frames["low"],
         close=frames["close"], volume=frames["volume"].fillna(0.0),
         leader=leader, followers=tuple(present), interval=interval,
+        session_tz=session_tz,
     )

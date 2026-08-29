@@ -168,6 +168,7 @@
 
   /* ---------- figures / charts ---------- */
   figure { margin: 34px 0 0; }
+  figure + .measure, figure + .table-scroll { margin-top: 34px; }
   .chart-frame {
     background: var(--surface); border: 1px solid var(--rule);
     border-radius: 8px; padding: 24px 22px 18px; box-shadow: var(--shadow);
@@ -183,6 +184,16 @@
     font-size: 12.5px; color: var(--ink-2);
   }
   .legend span { display: inline-flex; align-items: center; gap: 7px; }
+  .toggle { display: inline-flex; gap: 2px; margin-bottom: 18px; background: var(--surface-2);
+            padding: 3px; border-radius: 6px; border: 1px solid var(--rule); }
+  .toggle button {
+    font-family: "IBM Plex Mono", monospace; font-size: 11.5px; letter-spacing: .04em;
+    padding: 6px 14px; border: 0; border-radius: 4px; cursor: pointer;
+    background: transparent; color: var(--ink-3);
+  }
+  .toggle button[aria-pressed="true"] { background: var(--surface); color: var(--ink); font-weight: 600;
+    box-shadow: 0 1px 2px rgba(0,0,0,.10); }
+  .toggle button:hover:not([aria-pressed="true"]) { color: var(--ink-2); }
   .swatch { width: 11px; height: 11px; border-radius: 2px; flex: none; }
   svg { display: block; width: 100%; height: auto; overflow: visible; }
   .bar { transition: opacity .12s ease; cursor: default; }
@@ -269,25 +280,25 @@
   <header class="masthead">
     <div class="kicker">
       <span>Statistical arbitrage</span><span class="dot">/</span>
-      <span>Solana ecosystem</span><span class="dot">/</span>
-      <span>17,477 hourly bars &middot; Aug 2024 – Aug 2026</span>
+      <span>Solana ecosystem &amp; US small caps</span><span class="dot">/</span>
+      <span>22,549 bars &middot; two markets &middot; Oct 2023 – Aug 2026</span>
     </div>
     <h1>The Uncrossable Spread</h1>
-    <p class="standfirst">A lead-lag effect that is statistically overwhelming, economically real, and completely impossible to trade.</p>
+    <p class="standfirst">A lead-lag effect that is statistically overwhelming in two unrelated markets, and tradable in neither — because it completes in the one moment nobody can trade.</p>
 
     <div class="thesis">
       <div class="pane">
-        <div class="pane-label">Edge, ignoring capacity</div>
-        <span class="figure live">+8.50<span class="figure-unit">bp</span></span>
-        <div class="figure-note">clustered t = +4.22 &nbsp;·&nbsp; 7,063 trades</div>
-        <div class="figure-sub">Per trade, out of sample, after purged walk-forward. This is a real effect.</div>
+        <div class="pane-label">Predictability in the gap you cannot trade</div>
+        <span class="figure live">+0.060</span>
+        <div class="figure-note">correlation, close(t) &rarr; open(t+1)</div>
+        <div class="figure-sub">The follower's catch-up has already happened by the time the next bar opens.</div>
       </div>
       <div class="divider"></div>
       <div class="pane">
-        <div class="pane-label">Edge, respecting capacity</div>
-        <span class="figure dead">&minus;0.14<span class="figure-unit">bp</span></span>
-        <div class="figure-note">clustered t = &minus;0.04 &nbsp;·&nbsp; 5,103 trades</div>
-        <div class="figure-sub">The same signal, once positions are capped at what the assets can actually absorb.</div>
+        <div class="pane-label">Predictability left to capture</div>
+        <span class="figure dead">+0.022</span>
+        <div class="figure-note">correlation, open(t+1) &rarr; close(t+1)</div>
+        <div class="figure-sub">Worth about 2bp per trade. A round trip costs 25&ndash;47bp.</div>
       </div>
     </div>
   </header>
@@ -297,8 +308,10 @@
     <h2>Liquid leaders move first; illiquid followers catch up</h2>
     <div class="measure">
       <p>The lead-lag hypothesis says that when common information arrives, the most liquid asset in a group prices it immediately while thinner names in the same group reprice with a delay. If that delay is long enough to observe and act on, it is tradable.</p>
-      <p>Solana is an unusually clean laboratory for this. <em class="term">SOL-USD</em> turns over roughly $212bn a day and dominates its ecosystem's information flow. The tokens around it span five orders of magnitude of liquidity, from Render at $236m a day down to Star Atlas at under $1,000. One shared driver, a genuine liquidity ladder beneath it.</p>
-      <p>The system tests fourteen followers against that one leader, on hourly bars, over two years.</p>
+      <p>Two markets were tested independently, chosen to fail in different ways.</p>
+      <p><em class="term">Solana</em> — SOL-USD turns over roughly $212bn a day and dominates its ecosystem's information flow. The fourteen tokens around it span five orders of magnitude of liquidity, from Render at $236m a day down to Star Atlas at under $1,000. Continuously traded, 17,477 hourly bars.</p>
+      <p><em class="term">US equities</em> — IWM (Russell 2000) leading twenty-seven small and micro caps, screened on liquidity and data coverage alone and never on measured lead-lag. Seven bars per session across 730 sessions. A much narrower liquidity ladder, but every name trades real volume.</p>
+      <p>The second market is the control. If the Solana result were a crypto artefact, equities would not reproduce it.</p>
     </div>
   </section>
 
@@ -306,25 +319,57 @@
     <div class="eyebrow">02 — Evidence</div>
     <h2>The effect is real, and it strengthens as liquidity falls</h2>
     <div class="measure">
-      <p>Correlating each follower's return at bar <code>t</code> with the leader's return at <code>t−1</code> gives the lead-lag coefficient. The pattern is textbook: the coefficient rises monotonically as liquidity falls, while the <em>contemporaneous</em> correlation falls in step — the signature of stale prices absorbing information late rather than of simple co-movement.</p>
-      <p>Critically, the reverse direction is empty. No follower predicts the leader; the largest reverse coefficient anywhere in the basket is &minus;0.026. The causality runs one way.</p>
+      <p>Correlating each follower's return at bar <code>t</code> with the leader's return at <code>t−1</code> gives the lead-lag coefficient. In Solana the pattern is textbook: the coefficient rises monotonically as liquidity falls, while the <em>contemporaneous</em> correlation falls in step — the signature of stale prices absorbing information late rather than of simple co-movement. Reverse causality is empty; the largest reverse coefficient in the basket is &minus;0.026.</p>
+      <p>Equities reproduce the effect at greater strength — <strong>19 of 27 names at t &gt; 2</strong>, mean coefficient <span class="mono">+0.051</span> against Solana's <span class="mono">+0.036</span> — but with two differences that matter. The gradient is <em>flat</em>: the liquid half averages +0.047 and the illiquid half +0.054, so unlike crypto the signal is not concentrated where it cannot be traded. And reverse causality is present but small, <span class="mono">+0.019</span> against a forward <span class="mono">+0.051</span>, so the equity causality is real but less clean.</p>
     </div>
 
     <figure>
       <div class="chart-frame">
-        <div class="chart-title">Lag-1 coefficient against SOL, by liquidity</div>
-        <div class="chart-sub">Assets ordered by average dollar volume, most liquid at top</div>
+        <div class="chart-title" id="ll-title">Lag-1 coefficient against SOL, by liquidity</div>
+        <div class="chart-sub" id="ll-sub">Assets ordered by average dollar volume, most liquid at top</div>
+        <div class="toggle" role="group" aria-label="Choose market">
+          <button type="button" data-market="solana" aria-pressed="true">Solana</button>
+          <button type="button" data-market="equity" aria-pressed="false">US equities</button>
+        </div>
         <svg id="chart-leadlag" viewBox="0 0 720 510" role="img" aria-label="Horizontal bar chart of lag-1 correlation for fourteen Solana ecosystem tokens, ordered by liquidity. The coefficient rises from 0.019 for Render to 0.108 for Samoyedcoin as liquidity falls."></svg>
       </div>
-      <figcaption>The four thinnest names carry the strongest signal. Samoyedcoin's lag-1 coefficient of 0.108 (t = 14.4) is nine times Jito's, and it trades roughly $2,000 a day.</figcaption>
+      <figcaption>Solana: the four thinnest names carry the strongest signal. Samoyedcoin's lag-1 coefficient of 0.108 (t = 14.4) is nine times Jito's, and it trades roughly $2,000 a day. In equities this gradient flattens out almost entirely.</figcaption>
     </figure>
   </section>
 
   <section>
-    <div class="eyebrow">03 — Constraint</div>
-    <h2>The signal lives where the volume does not</h2>
+    <div class="eyebrow">03 — Where it goes</div>
+    <h2>The catch-up completes before you can trade it</h2>
     <div class="measure">
-      <p>Every backtest so far has quietly assumed the orders could be filled. They cannot.</p>
+      <p>A lead-lag coefficient measured on closing prices answers the wrong question. It asks whether the follower moves after the leader — but a strategy cannot transact at the close it used to form the signal. It sees the close of bar <code>t</code>, and the earliest it can buy is the open of bar <code>t+1</code>.</p>
+      <p>Splitting the follower's next-bar move into those two legs is decisive, and both markets give the same answer: nearly all of the predictable move lands in the gap between the two prices.</p>
+    </div>
+
+    <figure>
+      <div class="chart-frame">
+        <div class="chart-title">Where the predictable move actually happens</div>
+        <div class="chart-sub">Correlation of the leader's move at bar t with each leg of the follower's next-bar move</div>
+        <div class="legend">
+          <span><i class="swatch" style="background:var(--indigo)"></i> Total, close(t) &rarr; close(t+1)</span>
+          <span><i class="swatch" style="background:var(--amber)"></i> Gap, close(t) &rarr; open(t+1) &mdash; untradeable</span>
+          <span><i class="swatch" style="background:var(--teal)"></i> Tradable, open(t+1) &rarr; close(t+1)</span>
+        </div>
+        <svg id="chart-decomp" viewBox="0 0 720 250" role="img" aria-label="Grouped bar chart comparing total, gap and tradable lead-lag correlation in equities and Solana. In equities the total is 0.051, the gap 0.060 and the tradable leg 0.022. In Solana the total is 0.036, the gap 0.079 and the tradable leg 0.021."></svg>
+      </div>
+      <figcaption>In both markets the untradeable gap carries more predictability than the entire close-to-close move, leaving a tradable residual of about 0.022. That residual is worth roughly 2bp per trade &mdash; against round-trip costs of 25bp in equities and 47bp in crypto.</figcaption>
+    </figure>
+
+    <div class="measure">
+      <p>This is the whole result, and it is market independent. The effect is not an illusion: the follower really does reprice after the leader. It reprices in the auction and the first print of the next bar, where a strategy watching bar closes has no way to participate.</p>
+      <p>That also explains why the inefficiency survives. It is not protected by obscurity or by risk. It is protected by the fact that capturing it requires being in the queue before the print, which is a different business from the one this system is in.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">04 — Constraint</div>
+    <h2>In crypto, the signal lives where the volume does not</h2>
+    <div class="measure">
+      <p>Beyond the gap problem, the Solana basket has a second, independent defect: its backtest quietly assumed the orders could be filled. They cannot.</p>
     </div>
 
     <div class="callout">
@@ -333,7 +378,8 @@
     </div>
 
     <div class="measure">
-      <p>Adding a capacity limit — no position may exceed 10% of an asset's average bar volume — is not a modelling nicety. It is the difference between a backtest and a trade. Once it is enforced, the four highest-signal names drop out of the book entirely, and they were carrying the result.</p>
+      <p>Adding a capacity limit — no position may exceed 10% of an asset's average bar volume — is not a modelling nicety. It is the difference between a backtest and a trade. Once it is enforced, the four highest-signal names drop out of the book entirely, and they were carrying the result: the measured edge falls from <span class="mono">+8.50bp</span> to <span class="mono">&minus;0.14bp</span>.</p>
+      <p><strong>Equities do not have this problem.</strong> The thinnest name in that basket still turns over $51k per bar, and the lead-lag gradient there is flat — the liquid half averages +0.047 against the illiquid half's +0.054. Removing the capacity limit moves the equity edge only from +1.39bp to +2.15bp. That is the control working: the capacity story is specific to crypto, while the gap story is not.</p>
     </div>
 
     <div class="table-scroll">
@@ -348,15 +394,36 @@
   </section>
 
   <section>
-    <div class="eyebrow">04 — Result</div>
-    <h2>Removing the capacity limit is the only thing that creates an edge</h2>
+    <div class="eyebrow">05 — Result</div>
+    <h2>Two markets, two failure modes, one verdict</h2>
     <div class="measure">
-      <p>Turning each component off in turn isolates what is actually doing the work. The Hawkes filter moves the result very little. The capacity limit moves it from nothing to everything — which is to say, the edge was never harvestable in the first place.</p>
+      <p>Turning each component off in turn isolates what is actually doing the work. In Solana the Hawkes filter moves the result very little while the capacity limit moves it from nothing to everything. In equities capacity is nearly irrelevant and there was never much edge to remove.</p>
+    </div>
+
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th>&nbsp;</th><th>Solana</th><th>US equities</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Bars</td><td>17,477 continuous</td><td>5,072 over 730 sessions</td></tr>
+          <tr><td>Followers</td><td>14</td><td>27</td></tr>
+          <tr><td>Mean lag-1 coefficient</td><td>+0.036</td><td>+0.051</td></tr>
+          <tr><td>Names at t &gt; 2</td><td>10 / 14</td><td>19 / 27</td></tr>
+          <tr><td>Mean reverse coefficient</td><td>+0.000</td><td>+0.019</td></tr>
+          <tr><td>Gross edge, no capacity limit</td><td class="pos">+8.50 bp (t = +4.22)</td><td>+2.15 bp (t = +0.83)</td></tr>
+          <tr><td>Gross edge, capacity enforced</td><td>&minus;0.14 bp (t = &minus;0.04)</td><td>+1.39 bp (t = +0.49)</td></tr>
+          <tr><td>Round-trip cost</td><td class="neg">47 bp</td><td class="neg">25 bp</td></tr>
+          <tr><td>Net per trade</td><td class="neg">&minus;47 bp</td><td class="neg">&minus;23 bp</td></tr>
+          <tr><td>Binding constraint</td><td>capacity</td><td>weak tradable residual</td></tr>
+          <tr><td>Deflated Sharpe</td><td>0.000</td><td>0.000</td></tr>
+        </tbody>
+      </table>
     </div>
 
     <figure>
       <div class="chart-frame">
-        <div class="chart-title">Gross edge per trade, by component ablation</div>
+        <div class="chart-title">Gross edge per trade, by component ablation — Solana</div>
         <div class="chart-sub">Cross-sectional construction, $10k book, out of sample</div>
         <div class="legend">
           <span><i class="swatch" style="background:var(--teal)"></i> Capacity limit enforced</span>
@@ -368,8 +435,8 @@
     </figure>
 
     <div class="measure">
-      <p>Against a round-trip cost of roughly <strong>47bp</strong>, a gross edge of &minus;0.14bp is not a marginal case. Breakeven would require costs near zero on assets whose spreads are among the widest in crypto.</p>
-      <p>The capacity curve confirms there is no book size that rescues it. Between $1,000 and $10m of gross notional, the gross edge never once separates from zero — the largest <span class="mono">|t|</span> anywhere on the curve is 1.04.</p>
+      <p>Against a round-trip cost of roughly <strong>47bp</strong>, a Solana gross edge of &minus;0.14bp is not a marginal case. Breakeven would require costs near zero on assets whose spreads are among the widest in crypto. Equities halve the cost to <strong>25bp</strong> and still need roughly ten times the edge they produce.</p>
+      <p>The capacity curve confirms there is no book size that rescues either market. Between $1,000 and $10m of gross notional the edge never separates from zero — the largest <span class="mono">|t|</span> anywhere on the Solana curve is 1.04, and on the equity curve 1.00.</p>
     </div>
 
     <div class="table-scroll">
@@ -383,13 +450,13 @@
   </section>
 
   <section>
-    <div class="eyebrow">05 — Components</div>
+    <div class="eyebrow">06 — Components</div>
     <h2>What the Hawkes filter and the neural net actually contributed</h2>
 
     <h3>Hawkes crash filter — machinery sound, benefit did not replicate</h3>
     <div class="measure">
       <p>The premise was promising. Negative jumps in these tokens cluster hard: conditional on a jump, the probability of another in the next bar runs 2.1&times; to 4.9&times; unconditional. Fitting <code>λ(t) = μ + Σ α·exp(−β(t−tᵢ))</code> by maximum likelihood gives branching ratios from 0.48 to 0.89 — Render sits close to explosive, one shock from a nine-event cascade.</p>
-      <p>Early exploration suggested this split the loss-making tail cleanly, separating a <span class="mono">+19bp</span> regime from a <span class="mono">−25bp</span> one. <strong>It did not survive.</strong> That result used full-sample jump thresholds and a proxy specification chosen after looking at the data. Under trailing-only thresholds, properly fitted parameters and purged folds, the gate is roughly neutral — it helps only in the top 1% of leader moves, on 454 trades, at t = 1.15.</p>
+      <p>Early exploration suggested this split the Solana loss-making tail cleanly, separating a <span class="mono">+19bp</span> regime from a <span class="mono">−25bp</span> one. <strong>It did not survive.</strong> That result used full-sample jump thresholds and a proxy specification chosen after looking at the data. Under trailing-only thresholds, properly fitted parameters and purged folds, the gate is roughly neutral — it helps only in the top 1% of leader moves, on 454 trades, at t = 1.15.</p>
       <p>The estimator itself is correct: it recovers known branching ratios from simulated processes to within 0.01. The trading benefit was selection bias, and the inference layer was built precisely to catch that.</p>
     </div>
 
@@ -403,30 +470,36 @@
     </div>
     <figcaption style="margin-top:12px">Self-excitation dominates cross-excitation everywhere: these crashes are mostly endogenous, not inherited from SOL.</figcaption>
 
-    <h3>Self-adapting neural overlay — a small, honest nothing</h3>
+    <h3>Self-adapting neural overlay — earns a little in crypto, nothing in equities</h3>
     <div class="measure">
       <p>A regime-gated mixture of experts predicts the residual the linear baseline misses, adapting online through a replay buffer that mixes recent bars with a reservoir sample of history. Its blend weight is <em>earned</em> from realised out-of-sample information coefficient, so a net that adds nothing collapses to the baseline on its own.</p>
-      <p>Across 19 folds it achieved a mean IC of <span class="mono">+0.023</span>, positive in 12 of them, lifting gross Sharpe from 0.49 to 0.66 and the mean trade from &minus;0.98bp to &minus;0.14bp. That is a real but statistically insignificant improvement on a strategy that remains firmly unprofitable. The CUSUM regime detector fired zero times — validated at 47 detections on synthetic regime breaks, it simply found none here.</p>
+      <p>On Solana it achieved a mean IC of <span class="mono">+0.023</span> across 19 folds, positive in 12, lifting gross Sharpe from 0.49 to 0.66. On equities the same net achieved a mean IC of <span class="mono">&minus;0.005</span>, positive in only 5 of 11 folds — actively worse than nothing. In both cases the blend behaved exactly as designed: it bought a little of the Solana net and essentially none of the equity one.</p>
+      <p>That asymmetry is the useful part. A net that reported a positive contribution on both markets would be suspicious; one that earns a small weight where there is residual structure and declines it where there is not is behaving like a measuring instrument rather than a slot machine. The CUSUM regime detector fired zero times in either market — validated at 47 detections on synthetic regime breaks, it simply found none here.</p>
     </div>
   </section>
 
   <div class="verdict">
     <div class="eyebrow">Verdict</div>
-    <h2>A real inefficiency, protected by its own illiquidity</h2>
+    <h2>A real inefficiency, protected by the moment it happens in</h2>
     <div class="measure">
-      <p>The honest reading is not that the hypothesis was wrong. The lead-lag effect is present, strongly significant, and correctly ordered by liquidity. It is simply located exclusively in assets too thin to trade — which is the most likely reason it still exists. An effect this visible in a liquid asset would have been arbitraged away years ago.</p>
+      <p>The hypothesis was not wrong. The lead-lag effect is present in both markets, strongly significant, correctly signed, and in crypto correctly ordered by liquidity. What the two markets together establish is <em>why</em> it is not tradable, and the answer is not the one the crypto sample alone suggested.</p>
+      <p>Crypto pointed at capacity: the edge sat in tokens nobody can fill. Equities removed that explanation — a flat liquidity gradient, real volume, half the costs — and the strategy still failed. What survived both tests is the gap. The follower reprices between the close and the next open, and a system that decides on closes is structurally one print too late.</p>
     </div>
     <ul class="ledger">
-      <li><span class="mark">✓</span><span>Lead-lag structure confirmed: coefficient rises monotonically as liquidity falls, reverse causality ≈ 0 across all fourteen followers.</span></li>
-      <li><span class="mark">✓</span><span>Hawkes estimator validated against simulated processes; branching ratios well differentiated across the basket.</span></li>
-      <li><span class="mark no">✗</span><span>No tradable edge at any book size from $1,000 to $10m. Largest <span class="mono">|t|</span> on the capacity curve is 1.04.</span></li>
+      <li><span class="mark">✓</span><span>Lead-lag structure confirmed in both markets: 10/14 Solana followers and 19/27 equity followers at <span class="mono">t &gt; 2</span>, with correctly signed, near-zero reverse causality.</span></li>
+      <li><span class="mark">✓</span><span>Hawkes estimator validated against simulated processes; branching ratios well differentiated across both baskets.</span></li>
+      <li><span class="mark">✓</span><span>The failure mechanism is identified and reproduces across two unrelated markets: the predictable move lands in the untradeable close-to-open gap.</span></li>
+      <li><span class="mark no">✗</span><span>No tradable edge at any book size from $1,000 to $10m in either market. Largest <span class="mono">|t|</span> on either capacity curve is 1.04.</span></li>
       <li><span class="mark no">✗</span><span>Hawkes trading benefit did not replicate out of sample once full-sample thresholds were removed.</span></li>
-      <li><span class="mark no">✗</span><span>Deflated Sharpe ratio 0.000 on every configuration — indistinguishable from selection luck.</span></li>
+      <li><span class="mark no">✗</span><span>Deflated Sharpe ratio 0.000 on every configuration in both markets — indistinguishable from selection luck.</span></li>
     </ul>
+    <div class="measure" style="margin-top:26px">
+      <p>Where this would have to go next is a different data regime, not a different model: quote-level data, entry at the touch rather than the next bar's open, and an execution path that can post inside the gap. Nothing in the residual suggests a bar-close strategy can be rescued by a better forecast.</p>
+    </div>
   </div>
 
   <footer>
-    <span>Purged walk-forward · 19 folds · 75.1% out-of-sample coverage · standard errors clustered by timestamp</span>
+    <span>Purged walk-forward · Solana 19 folds / 75.1% OOS · equities 11 folds / 72.3% OOS · standard errors clustered by timestamp</span>
     <span class="mono">signal @ close(t) → fill @ open(t+1)</span>
   </footer>
 </div>
@@ -493,6 +566,41 @@
     { n: 10000000, c: "directional",     tr: 2130, g: -1.240, t: -0.20, cost: 32.32, net: -33.57 }
   ];
 
+  var EQUITY = [
+    { s: "TALO", adv: 2647097, l0: 0.3975, l1: 0.0446, t: 2.68, rev:  0.0305, tier: 0, cost:  8.7 },
+    { s: "WLDN", adv: 1727868, l0: 0.4043, l1: 0.0182, t: 1.08, rev:  0.0102, tier: 0, cost: 16.5 },
+    { s: "KOPN", adv: 1072927, l0: 0.4241, l1: 0.0192, t: 1.15, rev:  0.0405, tier: 0, cost: 18.1 },
+    { s: "CEVA", adv:  935159, l0: 0.5697, l1: 0.0616, t: 3.71, rev:  0.0153, tier: 0, cost: 12.5 },
+    { s: "DAKT", adv:  822682, l0: 0.4519, l1: 0.0360, t: 2.17, rev:  0.0269, tier: 0, cost:  9.8 },
+    { s: "NVEC", adv:  521714, l0: 0.3158, l1: 0.0819, t: 4.60, rev:  0.0461, tier: 0, cost: 21.7 },
+    { s: "MYE",  adv:  513691, l0: 0.4943, l1: 0.0560, t: 3.37, rev: -0.0051, tier: 1, cost: 16.3 },
+    { s: "SD",   adv:  513054, l0: 0.3939, l1: 0.0328, t: 1.97, rev:  0.0203, tier: 1, cost: 15.0 },
+    { s: "REI",  adv:  483748, l0: 0.3080, l1: 0.0262, t: 1.58, rev:  0.0368, tier: 1, cost: 16.4 },
+    { s: "IRMD", adv:  465522, l0: 0.3049, l1: 0.0659, t: 3.91, rev:  0.0289, tier: 1, cost: 21.2 },
+    { s: "AMPY", adv:  460660, l0: 0.2702, l1: 0.0250, t: 1.50, rev:  0.0203, tier: 1, cost: 18.2 },
+    { s: "RICK", adv:  391648, l0: 0.4033, l1: 0.0699, t: 4.19, rev:  0.0360, tier: 1, cost: 22.7 },
+    { s: "JAKK", adv:  322769, l0: 0.4384, l1: 0.0785, t: 4.73, rev: -0.0059, tier: 1, cost: 24.3 },
+    { s: "FMBH", adv:  283310, l0: 0.5232, l1: 0.0686, t: 4.09, rev:  0.0387, tier: 2, cost: 26.2 },
+    { s: "LTRX", adv:  281805, l0: 0.3615, l1: 0.0454, t: 2.73, rev:  0.0227, tier: 2, cost: 32.9 },
+    { s: "ESOA", adv:  241143, l0: 0.2966, l1: 0.0474, t: 2.84, rev:  0.0033, tier: 2, cost: 30.6 },
+    { s: "NNBR", adv:  203307, l0: 0.3053, l1: 0.0333, t: 1.99, rev:  0.0161, tier: 2, cost: 53.5 },
+    { s: "ELMD", adv:  197775, l0: 0.1951, l1: 0.0047, t: 0.27, rev:  0.0087, tier: 2, cost: 40.4 },
+    { s: "EPM",  adv:  196798, l0: 0.3611, l1: 0.0283, t: 1.70, rev:  0.0551, tier: 2, cost: 36.6 },
+    { s: "FLXS", adv:  175019, l0: 0.2493, l1: 0.0840, t: 4.65, rev:  0.0222, tier: 2, cost: 37.6 },
+    { s: "LAKE", adv:  167977, l0: 0.2651, l1: 0.0582, t: 3.43, rev: -0.0004, tier: 3, cost: 43.7 },
+    { s: "INTT", adv:  163493, l0: 0.2733, l1: 0.0930, t: 5.57, rev: -0.0030, tier: 3, cost: 45.6 },
+    { s: "RCMT", adv:  162029, l0: 0.2032, l1: 0.0417, t: 2.46, rev: -0.0205, tier: 3, cost: 42.5 },
+    { s: "UUU",  adv:  126571, l0: 0.0557, l1: 0.0445, t: 2.36, rev: -0.0036, tier: 3, cost: 56.0 },
+    { s: "PKOH", adv:  111903, l0: 0.3034, l1: 0.1145, t: 6.45, rev:  0.0474, tier: 3, cost: 54.7 },
+    { s: "GENC", adv:   59557, l0: 0.2381, l1: 0.0708, t: 3.97, rev:  0.0147, tier: 3, cost: 61.0 },
+    { s: "INVE", adv:   51279, l0: 0.1359, l1: 0.0556, t: 3.22, rev: -0.0202, tier: 3, cost: 59.1 }
+  ];
+
+  var DECOMP = [
+    { market: "US equities", total: 0.0510, gap: 0.0600, tradable: 0.0218 },
+    { market: "Solana",      total: 0.0361, gap: 0.0787, tradable: 0.0208 }
+  ];
+
   var NS = "http://www.w3.org/2000/svg";
   function el(name, attrs, text) {
     var e = document.createElementNS(NS, name);
@@ -517,38 +625,81 @@
     node.addEventListener("mouseleave", function () { tip.style.opacity = "0"; });
   }
 
-  /* ---- chart 1: lead-lag by liquidity ---- */
+  /* ---- chart 1: lead-lag by liquidity, switchable by market ---- */
   (function () {
     var svg = document.getElementById("chart-leadlag");
-    var W = 720, rowH = 33, top = 32, left = 152, right = 56;
-    var plotW = W - left - right;
-    var max = 0.115;
-    var x = function (v) { return left + (v / max) * plotW; };
+    var title = document.getElementById("ll-title");
+    var sub = document.getElementById("ll-sub");
+    var SETS = {
+      solana: { rows: LEADLAG, leader: "SOL-USD", max: 0.115,
+                ticks: [0, 0.025, 0.05, 0.075, 0.1],
+                note: "lag-1 correlation with SOL-USD  \u2192  more liquid at top" },
+      equity: { rows: EQUITY, leader: "IWM", max: 0.125,
+                ticks: [0, 0.025, 0.05, 0.075, 0.1, 0.125],
+                note: "lag-1 correlation with IWM  \u2192  more liquid at top" }
+    };
 
-    [0, 0.025, 0.05, 0.075, 0.1].forEach(function (g) {
-      svg.appendChild(el("line", { x1: x(g), x2: x(g), y1: top - 12, y2: top + LEADLAG.length * rowH - 8,
-        class: g === 0 ? "zeroline" : "gridline" }));
-      svg.appendChild(el("text", { x: x(g), y: top - 18, "text-anchor": "middle", class: "ax-label" }, g.toFixed(3)));
+    function render(which) {
+      var set = SETS[which];
+      var rows = set.rows;
+      // Keep rows compact enough that 27 equity names fit the same frame as 14 tokens.
+      var rowH = rows.length > 20 ? 20 : 33;
+      var top = 32, left = 152, right = 56, W = 720;
+      var plotW = W - left - right;
+      var height = top + rows.length * rowH + 40;
+      svg.setAttribute("viewBox", "0 0 " + W + " " + height);
+      while (svg.firstChild) svg.removeChild(svg.firstChild);
+      var x = function (v) { return left + (v / set.max) * plotW; };
+
+      set.ticks.forEach(function (g) {
+        svg.appendChild(el("line", { x1: x(g), x2: x(g), y1: top - 12,
+          y2: top + rows.length * rowH - 8, class: g === 0 ? "zeroline" : "gridline" }));
+        svg.appendChild(el("text", { x: x(g), y: top - 18, "text-anchor": "middle",
+          class: "ax-label" }, g.toFixed(3)));
+      });
+
+      rows.forEach(function (d, i) {
+        var y = top + i * rowH;
+        var barH = rowH > 24 ? 15 : 12;
+        var g = el("g", { class: "bar" });
+        g.appendChild(el("rect", { x: x(0), y: y, width: Math.max(x(d.l1) - x(0), 1.5),
+          height: barH, rx: 3, fill: "var(--teal)" }));
+        var name = d.s.replace("-USD", "");
+        if (rowH > 24) {
+          g.appendChild(el("text", { x: left - 12, y: y + 6, "text-anchor": "end",
+            "dominant-baseline": "middle", class: "row-label" }, name));
+          g.appendChild(el("text", { x: left - 12, y: y + 21, "text-anchor": "end",
+            class: "row-sub" }, money(d.adv) + "/bar"));
+        } else {
+          g.appendChild(el("text", { x: left - 12, y: y + barH / 2, "text-anchor": "end",
+            "dominant-baseline": "middle", class: "row-label" }, name + "  " + money(d.adv)));
+        }
+        g.appendChild(el("text", { x: x(d.l1) + 9, y: y + barH / 2, "dominant-baseline": "middle",
+          class: "val-label" }, d.l1.toFixed(3)));
+        bindTip(g, name + "\nlag-1  " + d.l1.toFixed(4) + "   t = " + d.t.toFixed(2)
+          + "\nlag-0  " + d.l0.toFixed(4) + "\nreverse " + d.rev.toFixed(4)
+          + "\nADV " + money(d.adv) + "/bar\nround trip " + d.cost.toFixed(1) + "bp");
+        svg.appendChild(g);
+      });
+
+      svg.appendChild(el("text", { x: left, y: top + rows.length * rowH + 22,
+        class: "ax-label" }, set.note));
+
+      title.textContent = "Lag-1 coefficient against " + set.leader + ", by liquidity";
+      var sig = rows.filter(function (r) { return r.t > 2; }).length;
+      sub.textContent = "Assets ordered by average dollar volume, most liquid at top \u00b7 "
+        + sig + " of " + rows.length + " significant at t > 2";
+    }
+
+    document.querySelectorAll(".toggle button").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        document.querySelectorAll(".toggle button").forEach(function (b) {
+          b.setAttribute("aria-pressed", String(b === btn));
+        });
+        render(btn.dataset.market);
+      });
     });
-
-    LEADLAG.forEach(function (d, i) {
-      var y = top + i * rowH;
-      var g = el("g", { class: "bar" });
-      g.appendChild(el("rect", { x: x(0), y: y, width: Math.max(x(d.l1) - x(0), 1.5), height: 15,
-        rx: 3, fill: "var(--teal)" }));
-      g.appendChild(el("text", { x: left - 12, y: y + 6, "text-anchor": "end",
-        "dominant-baseline": "middle", class: "row-label" }, d.s.replace("-USD", "")));
-      g.appendChild(el("text", { x: left - 12, y: y + 21, "text-anchor": "end", class: "row-sub" }, money(d.adv) + "/bar"));
-      g.appendChild(el("text", { x: x(d.l1) + 9, y: y + 8, "dominant-baseline": "middle",
-        class: "val-label" }, d.l1.toFixed(3)));
-      bindTip(g, d.s + "\nlag-1  " + d.l1.toFixed(4) + "   t = " + d.t.toFixed(2)
-        + "\nlag-0  " + d.l0.toFixed(4) + "\nreverse " + d.rev.toFixed(4)
-        + "\nADV " + money(d.adv) + "/bar");
-      svg.appendChild(g);
-    });
-
-    svg.appendChild(el("text", { x: left, y: top + LEADLAG.length * rowH + 20, class: "ax-label" },
-      "lag-1 correlation with SOL-USD  →  more liquid at top"));
+    render("solana");
   })();
 
   /* ---- chart 2: ablation ---- */
@@ -586,6 +737,51 @@
 
     svg.appendChild(el("text", { x: left, y: top + ABLATION.length * rowH + 16, class: "ax-label" },
       "gross basis points per trade"));
+  })();
+
+  /* ---- chart 3: gap vs tradable decomposition ---- */
+  (function () {
+    var svg = document.getElementById("chart-decomp");
+    var W = 720, left = 120, right = 60, top = 40;
+    var groupH = 88, barH = 20, gapY = 6;
+    var plotW = W - left - right;
+    var max = 0.09;
+    var x = function (v) { return left + (v / max) * plotW; };
+    var series = [
+      { key: "total",    label: "Total",    color: "var(--indigo)" },
+      { key: "gap",      label: "Gap",      color: "var(--amber)" },
+      { key: "tradable", label: "Tradable", color: "var(--teal)" }
+    ];
+
+    [0, 0.02, 0.04, 0.06, 0.08].forEach(function (g) {
+      svg.appendChild(el("line", { x1: x(g), x2: x(g), y1: top - 14,
+        y2: top + DECOMP.length * groupH - 16, class: g === 0 ? "zeroline" : "gridline" }));
+      svg.appendChild(el("text", { x: x(g), y: top - 20, "text-anchor": "middle", class: "ax-label" },
+        g.toFixed(2)));
+    });
+
+    DECOMP.forEach(function (d, gi) {
+      var y0 = top + gi * groupH;
+      svg.appendChild(el("text", { x: left - 14, y: y0 + (3 * (barH + gapY)) / 2 - 4,
+        "text-anchor": "end", "dominant-baseline": "middle", class: "row-label" }, d.market));
+      series.forEach(function (sr, si) {
+        var y = y0 + si * (barH + gapY);
+        var g = el("g", { class: "bar" });
+        g.appendChild(el("rect", { x: x(0), y: y, width: Math.max(x(d[sr.key]) - x(0), 2),
+          height: barH, rx: 3, fill: sr.color }));
+        g.appendChild(el("text", { x: x(d[sr.key]) + 9, y: y + barH / 2,
+          "dominant-baseline": "middle", class: "val-label" }, d[sr.key].toFixed(4)));
+        g.appendChild(el("text", { x: left + 8, y: y + barH / 2, "dominant-baseline": "middle",
+          class: "row-sub", style: "fill:var(--paper)" }, sr.label));
+        bindTip(g, d.market + " — " + sr.label + "\ncorrelation " + d[sr.key].toFixed(4)
+          + (sr.key === "gap" ? "\ncannot be traded" : "")
+          + (sr.key === "tradable" ? "\nwhat the strategy captures" : ""));
+        svg.appendChild(g);
+      });
+    });
+
+    svg.appendChild(el("text", { x: left, y: top + DECOMP.length * groupH + 4, class: "ax-label" },
+      "correlation with the leader's move at bar t"));
   })();
 
   /* ---- tables ---- */

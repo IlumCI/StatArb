@@ -1,8 +1,16 @@
-"""The traded universe: one liquid leader and a basket of illiquid followers.
+"""Traded universes: one liquid leader and a basket of illiquid followers.
 
-Follower selection is deliberately restricted to Solana-ecosystem tokens. The whole
-lead-lag premise needs a *shared information source* (SOL) plus a genuine liquidity
-ladder, and this basket spans roughly $50M down to $0.1M in average dollar volume.
+The lead-lag premise needs two things: a *shared information source* the whole basket
+responds to, and a genuine liquidity ladder beneath it. Two markets are provided.
+
+**Solana** — SOL-USD leads its ecosystem tokens. Continuously traded, a very wide
+liquidity ladder, but the thinnest names turn over a few dollars an hour.
+
+**US equities** — IWM (Russell 2000) leads a basket of small and micro caps. Session
+based rather than continuous, a much narrower liquidity ladder, but every name in it
+trades real volume. The follower list was screened on liquidity and data coverage
+alone, never on measured lead-lag, so the basket is not selected on the thing being
+tested.
 """
 
 from __future__ import annotations
@@ -36,6 +44,18 @@ FOLLOWERS: tuple[str, ...] = (
 N_TIERS = 4
 
 
+#: US small/micro caps surviving a signal-blind screen of a broader candidate list:
+#: at least 4,500 hourly bars of history and average dollar volume per bar between
+#: $30k and $3m. Selection never referenced the lead-lag coefficient being measured.
+EQUITY_LEADER = "IWM"
+
+EQUITY_FOLLOWERS: tuple[str, ...] = (
+    "TALO", "WLDN", "KOPN", "CEVA", "DAKT", "NVEC", "MYE", "SD", "IRMD",
+    "REI", "AMPY", "RICK", "JAKK", "LTRX", "FMBH", "NNBR", "ESOA", "ELMD",
+    "FLXS", "EPM", "RCMT", "LAKE", "INTT", "UUU", "PKOH", "GENC", "INVE",
+)
+
+
 @dataclass(frozen=True)
 class Universe:
     leader: str
@@ -49,8 +69,62 @@ class Universe:
         return len(self.followers)
 
 
-def default_universe() -> Universe:
-    return Universe(leader=LEADER, followers=FOLLOWERS)
+@dataclass(frozen=True)
+class Market:
+    """A tradable universe plus the venue conventions that go with it."""
+
+    name: str
+    leader: str
+    followers: tuple[str, ...]
+    #: Exchange timezone defining session boundaries; None for a continuous market.
+    session_tz: str | None
+    #: Bars in a trading year, used to annualise Sharpe ratios.
+    bars_per_year: int
+    description: str
+
+    @property
+    def universe(self) -> Universe:
+        return Universe(leader=self.leader, followers=self.followers)
+
+    @property
+    def symbols(self) -> tuple[str, ...]:
+        return (self.leader, *self.followers)
+
+    @property
+    def is_continuous(self) -> bool:
+        return self.session_tz is None
+
+
+SOLANA_MARKET = Market(
+    name="solana",
+    leader=LEADER,
+    followers=FOLLOWERS,
+    session_tz=None,
+    bars_per_year=24 * 365,
+    description="SOL-USD leading Solana ecosystem tokens, traded continuously",
+)
+
+EQUITY_MARKET = Market(
+    name="equity",
+    leader=EQUITY_LEADER,
+    followers=EQUITY_FOLLOWERS,
+    session_tz="America/New_York",
+    # 7 hourly bars per US equity session (the last one is a half bar), 252 sessions.
+    bars_per_year=7 * 252,
+    description="IWM leading US small and micro caps, 7 bars per session",
+)
+
+MARKETS: dict[str, Market] = {m.name: m for m in (SOLANA_MARKET, EQUITY_MARKET)}
+
+
+def get_market(name: str) -> Market:
+    if name not in MARKETS:
+        raise ValueError(f"unknown market {name!r}; choose from {sorted(MARKETS)}")
+    return MARKETS[name]
+
+
+def default_universe(market: str = "solana") -> Universe:
+    return get_market(market).universe
 
 
 def dollar_volume(close: pd.DataFrame, volume: pd.DataFrame) -> pd.DataFrame:
