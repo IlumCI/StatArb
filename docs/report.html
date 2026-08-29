@@ -1,0 +1,640 @@
+<title>The Uncrossable Spread</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --paper:      #F5F5F2;
+    --surface:    #FBFBF9;
+    --surface-2:  #EDEEE9;
+    --ink:        #16191B;
+    --ink-2:      #3D4548;
+    --ink-3:      #5F6A70;
+    --rule:       #D6D8D1;
+    --rule-firm:  #B9BCB3;
+    --teal:       #008C9E;
+    --amber:      #C2621B;
+    --indigo:     #3F5FA8;
+    --teal-wash:  rgba(0,140,158,0.10);
+    --amber-wash: rgba(194,98,27,0.10);
+    --shadow:     0 1px 2px rgba(22,25,27,.05), 0 8px 24px -16px rgba(22,25,27,.28);
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:      #101315;
+      --surface:    #171B1D;
+      --surface-2:  #1E2325;
+      --ink:        #E6E9E7;
+      --ink-2:      #B7BFBD;
+      --ink-3:      #8B9491;
+      --rule:       #2A3033;
+      --rule-firm:  #3C4448;
+      --teal:       #1E9CAC;
+      --amber:      #C4681F;
+      --indigo:     #6E85D6;
+      --teal-wash:  rgba(30,156,172,0.14);
+      --amber-wash: rgba(196,104,31,0.14);
+      --shadow:     0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.7);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:      #101315;
+    --surface:    #171B1D;
+    --surface-2:  #1E2325;
+    --ink:        #E6E9E7;
+    --ink-2:      #B7BFBD;
+    --ink-3:      #8B9491;
+    --rule:       #2A3033;
+    --rule-firm:  #3C4448;
+    --teal:       #1E9CAC;
+    --amber:      #C4681F;
+    --indigo:     #6E85D6;
+    --teal-wash:  rgba(30,156,172,0.14);
+    --amber-wash: rgba(196,104,31,0.14);
+    --shadow:     0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.7);
+    color-scheme: dark;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
+    font-size: 16px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 28px 96px; }
+  .measure { max-width: 68ch; }
+
+  /* ---------- masthead ---------- */
+  .masthead { padding: 72px 0 0; }
+  .kicker {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 11.5px; font-weight: 500; letter-spacing: .16em;
+    text-transform: uppercase; color: var(--ink-3);
+    display: flex; flex-wrap: wrap; gap: 10px; align-items: baseline;
+  }
+  .kicker .dot { color: var(--rule-firm); }
+  h1 {
+    font-family: "Newsreader", Georgia, serif;
+    font-weight: 500; font-size: clamp(40px, 7vw, 72px);
+    line-height: 1.02; letter-spacing: -0.022em;
+    margin: 20px 0 0; text-wrap: balance; max-width: 15ch;
+  }
+  .standfirst {
+    font-family: "Newsreader", Georgia, serif;
+    font-size: clamp(19px, 2.3vw, 23px); line-height: 1.5;
+    color: var(--ink-2); margin: 22px 0 0; max-width: 54ch;
+    font-style: italic;
+  }
+
+  /* ---------- the thesis: two numbers ---------- */
+  .thesis {
+    margin: 56px 0 0; border-top: 1.5px solid var(--rule-firm);
+    border-bottom: 1.5px solid var(--rule-firm);
+    display: grid; grid-template-columns: 1fr auto 1fr;
+  }
+  @media (max-width: 720px) { .thesis { grid-template-columns: 1fr; } }
+  .pane { padding: 30px 4px 32px; }
+  .pane + .divider + .pane { padding-left: 34px; }
+  @media (max-width: 720px) {
+    .pane + .divider + .pane { padding-left: 4px; border-top: 1px solid var(--rule); }
+  }
+  .divider { width: 1px; background: var(--rule); }
+  @media (max-width: 720px) { .divider { display: none; } }
+  .pane-label {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--ink-3); margin-bottom: 14px;
+  }
+  .figure {
+    font-family: "Newsreader", Georgia, serif;
+    font-size: clamp(46px, 8vw, 76px); line-height: 1;
+    letter-spacing: -0.03em; font-variant-numeric: tabular-nums;
+    display: block;
+  }
+  .figure.live { color: var(--teal); }
+  .figure.dead { color: var(--ink-3); }
+  .figure-unit { font-size: .34em; letter-spacing: 0; margin-left: .18em; color: var(--ink-3); }
+  .figure-note {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 12.5px; color: var(--ink-2); margin-top: 12px;
+    font-variant-numeric: tabular-nums;
+  }
+  .figure-sub { font-size: 14.5px; color: var(--ink-2); margin-top: 10px; max-width: 34ch; }
+
+  /* ---------- sections ---------- */
+  section { margin-top: 68px; }
+  .eyebrow {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 11px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--teal); display: flex; align-items: center; gap: 12px;
+    margin-bottom: 18px;
+  }
+  .eyebrow::after { content: ""; flex: 1; height: 1px; background: var(--rule); }
+  h2 {
+    font-family: "Newsreader", Georgia, serif;
+    font-weight: 500; font-size: clamp(27px, 3.6vw, 37px);
+    line-height: 1.14; letter-spacing: -0.016em; margin: 0 0 18px;
+    text-wrap: balance; max-width: 22ch;
+  }
+  h3 {
+    font-family: "IBM Plex Sans", sans-serif; font-weight: 600;
+    font-size: 15px; letter-spacing: .005em; margin: 34px 0 10px;
+  }
+  p { margin: 0 0 17px; }
+  .measure p:last-child { margin-bottom: 0; }
+  strong { font-weight: 600; }
+  em.term { font-style: normal; font-weight: 500; color: var(--teal); }
+  code, .mono {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .88em; font-variant-numeric: tabular-nums;
+  }
+  code { background: var(--surface-2); padding: .1em .38em; border-radius: 3px; }
+
+  /* ---------- callout ---------- */
+  .callout {
+    margin: 30px 0; padding: 22px 26px; background: var(--surface);
+    border-left: 3px solid var(--amber); border-radius: 0 6px 6px 0;
+    box-shadow: var(--shadow);
+  }
+  .callout .pane-label { color: var(--amber); }
+  .callout p:last-child { margin-bottom: 0; }
+
+  /* ---------- figures / charts ---------- */
+  figure { margin: 34px 0 0; }
+  .chart-frame {
+    background: var(--surface); border: 1px solid var(--rule);
+    border-radius: 8px; padding: 24px 22px 18px; box-shadow: var(--shadow);
+  }
+  .chart-title { font-weight: 600; font-size: 15px; margin-bottom: 3px; }
+  .chart-sub { font-size: 13.5px; color: var(--ink-3); margin-bottom: 20px; }
+  figcaption {
+    font-size: 13.5px; color: var(--ink-3); margin-top: 14px;
+    max-width: 72ch; line-height: 1.55;
+  }
+  .legend {
+    display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 18px;
+    font-size: 12.5px; color: var(--ink-2);
+  }
+  .legend span { display: inline-flex; align-items: center; gap: 7px; }
+  .swatch { width: 11px; height: 11px; border-radius: 2px; flex: none; }
+  svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .bar { transition: opacity .12s ease; cursor: default; }
+  .bar:hover { opacity: .78; }
+  .ax-label {
+    font-family: "IBM Plex Mono", monospace; font-size: 10.5px;
+    fill: var(--ink-3); font-variant-numeric: tabular-nums;
+  }
+  .row-label { font-family: "IBM Plex Sans", sans-serif; font-size: 12.5px; fill: var(--ink); }
+  .row-sub { font-family: "IBM Plex Mono", monospace; font-size: 10px; fill: var(--ink-3); }
+  .val-label {
+    font-family: "IBM Plex Mono", monospace; font-size: 11.5px;
+    fill: var(--ink-2); font-variant-numeric: tabular-nums;
+  }
+  .gridline { stroke: var(--rule); stroke-width: 1; }
+  .zeroline { stroke: var(--rule-firm); stroke-width: 1.5; }
+
+  /* ---------- tables ---------- */
+  .table-scroll { overflow-x: auto; margin: 28px 0 0; border-radius: 8px; border: 1px solid var(--rule); background: var(--surface); box-shadow: var(--shadow); }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td {
+    padding: 9px 14px; text-align: right; white-space: nowrap;
+    border-bottom: 1px solid var(--rule);
+  }
+  th:first-child, td:first-child { text-align: left; }
+  thead th {
+    font-family: "IBM Plex Mono", monospace; font-size: 10.5px;
+    letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3);
+    font-weight: 500; background: var(--surface-2); position: sticky; top: 0;
+    border-bottom: 1px solid var(--rule-firm);
+  }
+  tbody td { font-variant-numeric: tabular-nums; font-family: "IBM Plex Mono", monospace; color: var(--ink-2); }
+  tbody td:first-child { font-family: "IBM Plex Sans", sans-serif; color: var(--ink); font-weight: 500; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: var(--surface-2); }
+  td.pos { color: var(--teal); font-weight: 500; }
+  td.neg { color: var(--amber); font-weight: 500; }
+  .tier {
+    display: inline-block; min-width: 20px; padding: 1px 6px; border-radius: 3px;
+    font-size: 10.5px; background: var(--surface-2); color: var(--ink-3);
+    border: 1px solid var(--rule);
+  }
+
+  /* ---------- verdict ---------- */
+  .verdict {
+    margin-top: 68px; padding: 34px 34px 36px; border-radius: 10px;
+    background: var(--surface); border: 1px solid var(--rule-firm);
+    border-top: 3px solid var(--teal); box-shadow: var(--shadow);
+  }
+  .verdict h2 { margin-top: 6px; }
+  .ledger { list-style: none; padding: 0; margin: 22px 0 0; display: grid; gap: 14px; }
+  .ledger li {
+    display: grid; grid-template-columns: 26px 1fr; gap: 14px;
+    align-items: start; font-size: 15px;
+  }
+  .ledger .mark {
+    font-family: "IBM Plex Mono", monospace; font-size: 12px; font-weight: 600;
+    color: var(--teal); padding-top: 2px;
+  }
+  .ledger .mark.no { color: var(--amber); }
+
+  /* ---------- footer ---------- */
+  footer {
+    margin-top: 72px; padding-top: 26px; border-top: 1px solid var(--rule);
+    font-size: 13px; color: var(--ink-3);
+    display: flex; flex-wrap: wrap; gap: 10px 26px; justify-content: space-between;
+  }
+  footer .mono { font-size: 12px; }
+
+  /* ---------- tooltip ---------- */
+  #tip {
+    position: fixed; pointer-events: none; opacity: 0; transform: translate(-50%, -130%);
+    background: var(--ink); color: var(--paper); padding: 7px 11px; border-radius: 5px;
+    font-family: "IBM Plex Mono", monospace; font-size: 11.5px; line-height: 1.45;
+    white-space: pre; z-index: 50; transition: opacity .1s ease; box-shadow: var(--shadow);
+  }
+
+  :focus-visible { outline: 2px solid var(--teal); outline-offset: 3px; border-radius: 2px; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="kicker">
+      <span>Statistical arbitrage</span><span class="dot">/</span>
+      <span>Solana ecosystem</span><span class="dot">/</span>
+      <span>17,477 hourly bars &middot; Aug 2024 – Aug 2026</span>
+    </div>
+    <h1>The Uncrossable Spread</h1>
+    <p class="standfirst">A lead-lag effect that is statistically overwhelming, economically real, and completely impossible to trade.</p>
+
+    <div class="thesis">
+      <div class="pane">
+        <div class="pane-label">Edge, ignoring capacity</div>
+        <span class="figure live">+8.50<span class="figure-unit">bp</span></span>
+        <div class="figure-note">clustered t = +4.22 &nbsp;·&nbsp; 7,063 trades</div>
+        <div class="figure-sub">Per trade, out of sample, after purged walk-forward. This is a real effect.</div>
+      </div>
+      <div class="divider"></div>
+      <div class="pane">
+        <div class="pane-label">Edge, respecting capacity</div>
+        <span class="figure dead">&minus;0.14<span class="figure-unit">bp</span></span>
+        <div class="figure-note">clustered t = &minus;0.04 &nbsp;·&nbsp; 5,103 trades</div>
+        <div class="figure-sub">The same signal, once positions are capped at what the assets can actually absorb.</div>
+      </div>
+    </div>
+  </header>
+
+  <section>
+    <div class="eyebrow">01 — Hypothesis</div>
+    <h2>Liquid leaders move first; illiquid followers catch up</h2>
+    <div class="measure">
+      <p>The lead-lag hypothesis says that when common information arrives, the most liquid asset in a group prices it immediately while thinner names in the same group reprice with a delay. If that delay is long enough to observe and act on, it is tradable.</p>
+      <p>Solana is an unusually clean laboratory for this. <em class="term">SOL-USD</em> turns over roughly $212bn a day and dominates its ecosystem's information flow. The tokens around it span five orders of magnitude of liquidity, from Render at $236m a day down to Star Atlas at under $1,000. One shared driver, a genuine liquidity ladder beneath it.</p>
+      <p>The system tests fourteen followers against that one leader, on hourly bars, over two years.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">02 — Evidence</div>
+    <h2>The effect is real, and it strengthens as liquidity falls</h2>
+    <div class="measure">
+      <p>Correlating each follower's return at bar <code>t</code> with the leader's return at <code>t−1</code> gives the lead-lag coefficient. The pattern is textbook: the coefficient rises monotonically as liquidity falls, while the <em>contemporaneous</em> correlation falls in step — the signature of stale prices absorbing information late rather than of simple co-movement.</p>
+      <p>Critically, the reverse direction is empty. No follower predicts the leader; the largest reverse coefficient anywhere in the basket is &minus;0.026. The causality runs one way.</p>
+    </div>
+
+    <figure>
+      <div class="chart-frame">
+        <div class="chart-title">Lag-1 coefficient against SOL, by liquidity</div>
+        <div class="chart-sub">Assets ordered by average dollar volume, most liquid at top</div>
+        <svg id="chart-leadlag" viewBox="0 0 720 510" role="img" aria-label="Horizontal bar chart of lag-1 correlation for fourteen Solana ecosystem tokens, ordered by liquidity. The coefficient rises from 0.019 for Render to 0.108 for Samoyedcoin as liquidity falls."></svg>
+      </div>
+      <figcaption>The four thinnest names carry the strongest signal. Samoyedcoin's lag-1 coefficient of 0.108 (t = 14.4) is nine times Jito's, and it trades roughly $2,000 a day.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <div class="eyebrow">03 — Constraint</div>
+    <h2>The signal lives where the volume does not</h2>
+    <div class="measure">
+      <p>Every backtest so far has quietly assumed the orders could be filled. They cannot.</p>
+    </div>
+
+    <div class="callout">
+      <div class="pane-label">The number that ends the strategy</div>
+      <p>A $12,500 position in <strong>MOBILE-USD</strong> — a routine slice of a $100k book — is <strong>74,000&times;</strong> that token's average hourly dollar volume. Samoyedcoin is 28,000&times;. Star Atlas is 15,000&times;. These are not assets with wide spreads; they are assets with essentially no volume at all.</p>
+    </div>
+
+    <div class="measure">
+      <p>Adding a capacity limit — no position may exceed 10% of an asset's average bar volume — is not a modelling nicety. It is the difference between a backtest and a trade. Once it is enforced, the four highest-signal names drop out of the book entirely, and they were carrying the result.</p>
+    </div>
+
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th>Asset</th><th>ADV / bar</th><th>Tier</th><th>Lag-0</th><th>Lag-1</th><th>t</th><th>Reverse</th><th>Round-trip cost</th></tr>
+        </thead>
+        <tbody id="tbody-leadlag"></tbody>
+      </table>
+    </div>
+    <figcaption style="margin-top:12px">Assumed round-trip cost at 2% participation, from the ADV-tiered spread model plus Amihud impact and taker fees. Cost rises exactly where the signal does.</figcaption>
+  </section>
+
+  <section>
+    <div class="eyebrow">04 — Result</div>
+    <h2>Removing the capacity limit is the only thing that creates an edge</h2>
+    <div class="measure">
+      <p>Turning each component off in turn isolates what is actually doing the work. The Hawkes filter moves the result very little. The capacity limit moves it from nothing to everything — which is to say, the edge was never harvestable in the first place.</p>
+    </div>
+
+    <figure>
+      <div class="chart-frame">
+        <div class="chart-title">Gross edge per trade, by component ablation</div>
+        <div class="chart-sub">Cross-sectional construction, $10k book, out of sample</div>
+        <div class="legend">
+          <span><i class="swatch" style="background:var(--teal)"></i> Capacity limit enforced</span>
+          <span><i class="swatch" style="background:var(--amber)"></i> Capacity limit removed &mdash; not tradable</span>
+        </div>
+        <svg id="chart-ablation" viewBox="0 0 720 300" role="img" aria-label="Bar chart of gross edge per trade across six ablation variants. The four variants that enforce the capacity limit all sit near zero, between minus 0.98 and minus 0.72 basis points. The two variants that remove it show plus 8.50 and plus 10.93 basis points."></svg>
+      </div>
+      <figcaption>Every variant that respects capacity sits within noise of zero. Both variants that ignore it show a large, highly significant edge — earned entirely on positions that could never be filled.</figcaption>
+    </figure>
+
+    <div class="measure">
+      <p>Against a round-trip cost of roughly <strong>47bp</strong>, a gross edge of &minus;0.14bp is not a marginal case. Breakeven would require costs near zero on assets whose spreads are among the widest in crypto.</p>
+      <p>The capacity curve confirms there is no book size that rescues it. Between $1,000 and $10m of gross notional, the gross edge never once separates from zero — the largest <span class="mono">|t|</span> anywhere on the curve is 1.04.</p>
+    </div>
+
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th>Book size</th><th>Construction</th><th>Trades</th><th>Gross bp</th><th>Clustered t</th><th>Cost bp</th><th>Net bp</th></tr>
+        </thead>
+        <tbody id="tbody-capacity"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">05 — Components</div>
+    <h2>What the Hawkes filter and the neural net actually contributed</h2>
+
+    <h3>Hawkes crash filter — machinery sound, benefit did not replicate</h3>
+    <div class="measure">
+      <p>The premise was promising. Negative jumps in these tokens cluster hard: conditional on a jump, the probability of another in the next bar runs 2.1&times; to 4.9&times; unconditional. Fitting <code>λ(t) = μ + Σ α·exp(−β(t−tᵢ))</code> by maximum likelihood gives branching ratios from 0.48 to 0.89 — Render sits close to explosive, one shock from a nine-event cascade.</p>
+      <p>Early exploration suggested this split the loss-making tail cleanly, separating a <span class="mono">+19bp</span> regime from a <span class="mono">−25bp</span> one. <strong>It did not survive.</strong> That result used full-sample jump thresholds and a proxy specification chosen after looking at the data. Under trailing-only thresholds, properly fitted parameters and purged folds, the gate is roughly neutral — it helps only in the top 1% of leader moves, on 454 trades, at t = 1.15.</p>
+      <p>The estimator itself is correct: it recovers known branching ratios from simulated processes to within 0.01. The trading benefit was selection bias, and the inference layer was built precisely to catch that.</p>
+    </div>
+
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th>Asset</th><th>Jump events</th><th>Branching ratio</th><th>Expected cascade</th><th>Half-life (bars)</th><th>Cross-excitation from SOL</th></tr>
+        </thead>
+        <tbody id="tbody-hawkes"></tbody>
+      </table>
+    </div>
+    <figcaption style="margin-top:12px">Self-excitation dominates cross-excitation everywhere: these crashes are mostly endogenous, not inherited from SOL.</figcaption>
+
+    <h3>Self-adapting neural overlay — a small, honest nothing</h3>
+    <div class="measure">
+      <p>A regime-gated mixture of experts predicts the residual the linear baseline misses, adapting online through a replay buffer that mixes recent bars with a reservoir sample of history. Its blend weight is <em>earned</em> from realised out-of-sample information coefficient, so a net that adds nothing collapses to the baseline on its own.</p>
+      <p>Across 19 folds it achieved a mean IC of <span class="mono">+0.023</span>, positive in 12 of them, lifting gross Sharpe from 0.49 to 0.66 and the mean trade from &minus;0.98bp to &minus;0.14bp. That is a real but statistically insignificant improvement on a strategy that remains firmly unprofitable. The CUSUM regime detector fired zero times — validated at 47 detections on synthetic regime breaks, it simply found none here.</p>
+    </div>
+  </section>
+
+  <div class="verdict">
+    <div class="eyebrow">Verdict</div>
+    <h2>A real inefficiency, protected by its own illiquidity</h2>
+    <div class="measure">
+      <p>The honest reading is not that the hypothesis was wrong. The lead-lag effect is present, strongly significant, and correctly ordered by liquidity. It is simply located exclusively in assets too thin to trade — which is the most likely reason it still exists. An effect this visible in a liquid asset would have been arbitraged away years ago.</p>
+    </div>
+    <ul class="ledger">
+      <li><span class="mark">✓</span><span>Lead-lag structure confirmed: coefficient rises monotonically as liquidity falls, reverse causality ≈ 0 across all fourteen followers.</span></li>
+      <li><span class="mark">✓</span><span>Hawkes estimator validated against simulated processes; branching ratios well differentiated across the basket.</span></li>
+      <li><span class="mark no">✗</span><span>No tradable edge at any book size from $1,000 to $10m. Largest <span class="mono">|t|</span> on the capacity curve is 1.04.</span></li>
+      <li><span class="mark no">✗</span><span>Hawkes trading benefit did not replicate out of sample once full-sample thresholds were removed.</span></li>
+      <li><span class="mark no">✗</span><span>Deflated Sharpe ratio 0.000 on every configuration — indistinguishable from selection luck.</span></li>
+    </ul>
+  </div>
+
+  <footer>
+    <span>Purged walk-forward · 19 folds · 75.1% out-of-sample coverage · standard errors clustered by timestamp</span>
+    <span class="mono">signal @ close(t) → fill @ open(t+1)</span>
+  </footer>
+</div>
+
+<div id="tip" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  var LEADLAG = [
+    { s: "RENDER-USD", adv: 12293864, l0: 0.7148, l1: 0.0191, t: 2.35,  rev:  0.0042, tier: 0, cost: 37.2 },
+    { s: "WIF-USD",    adv: 5750834,  l0: 0.6819, l1: 0.0264, t: 3.50,  rev: -0.0121, tier: 0, cost: 33.4 },
+    { s: "RAY-USD",    adv: 3038146,  l0: 0.7378, l1: 0.0151, t: 1.99,  rev:  0.0017, tier: 0, cost: 32.6 },
+    { s: "ORCA-USD",   adv: 1526980,  l0: 0.4285, l1: 0.0345, t: 4.57,  rev: -0.0094, tier: 1, cost: 39.4 },
+    { s: "JTO-USD",    adv: 1311315,  l0: 0.6224, l1: 0.0104, t: 1.37,  rev:  0.0003, tier: 1, cost: 37.7 },
+    { s: "HNT-USD",    adv: 744530,   l0: 0.4958, l1: 0.0147, t: 1.95,  rev: -0.0078, tier: 1, cost: 42.2 },
+    { s: "PYTH-USD",   adv: 183980,   l0: 0.6554, l1: 0.0392, t: 5.19,  rev: -0.0077, tier: 1, cost: 54.5 },
+    { s: "W-USD",      adv: 115649,   l0: 0.6286, l1: 0.0210, t: 2.78,  rev: -0.0046, tier: 2, cost: 61.8 },
+    { s: "TNSR-USD",   adv: 99132,    l0: 0.4071, l1: 0.0078, t: 1.04,  rev: -0.0255, tier: 2, cost: 59.5 },
+    { s: "FIDA-USD",   adv: 75308,    l0: 0.5219, l1: 0.0221, t: 2.91,  rev: -0.0089, tier: 2, cost: 64.4 },
+    { s: "KMNO-USD",   adv: 16404,    l0: 0.5322, l1: 0.0687, t: 9.10,  rev:  0.0152, tier: 2, cost: 67.2 },
+    { s: "SAMO-USD",   adv: 85,       l0: 0.3135, l1: 0.1083, t: 14.36, rev:  0.0098, tier: 3, cost: 97.0 },
+    { s: "MOBILE-USD", adv: 44,       l0: 0.2214, l1: 0.0394, t: 5.19,  rev: -0.0049, tier: 3, cost: 97.0 },
+    { s: "ATLAS-USD",  adv: 39,       l0: 0.2610, l1: 0.0764, t: 10.10, rev: -0.0044, tier: 3, cost: 97.0 }
+  ];
+
+  var ABLATION = [
+    { v: "Full system",            bp: -0.975,  t: -0.30, cap: true  },
+    { v: "No Hawkes scaler",       bp: -0.975,  t: -0.30, cap: true  },
+    { v: "No Hawkes gate",         bp: -0.715,  t: -0.29, cap: true  },
+    { v: "No Hawkes at all",       bp: -0.715,  t: -0.29, cap: true  },
+    { v: "No capacity limit",      bp:  8.496,  t:  4.22, cap: false },
+    { v: "No Hawkes, no capacity", bp: 10.931,  t:  5.86, cap: false }
+  ];
+
+  var HAWKES = [
+    { s: "RENDER-USD", ev: 350, n: 0.893, casc: 9.37, hl: 70.5, cross: 0.000 },
+    { s: "MOBILE-USD", ev: 529, n: 0.776, casc: 4.47, hl: 42.4, cross: 0.109 },
+    { s: "JTO-USD",    ev: 452, n: 0.690, casc: 3.23, hl: 39.6, cross: 0.068 },
+    { s: "TNSR-USD",   ev: 454, n: 0.656, casc: 2.91, hl: 13.4, cross: 0.034 },
+    { s: "HNT-USD",    ev: 437, n: 0.651, casc: 2.86, hl: 40.8, cross: 0.247 },
+    { s: "ORCA-USD",   ev: 441, n: 0.630, casc: 2.71, hl: 13.4, cross: 0.113 },
+    { s: "RAY-USD",    ev: 404, n: 0.558, casc: 2.26, hl: 24.9, cross: 0.055 },
+    { s: "FIDA-USD",   ev: 428, n: 0.554, casc: 2.24, hl: 15.9, cross: 0.041 },
+    { s: "ATLAS-USD",  ev: 415, n: 0.543, casc: 2.19, hl: 18.0, cross: 0.163 },
+    { s: "SAMO-USD",   ev: 446, n: 0.532, casc: 2.14, hl: 18.6, cross: 0.070 },
+    { s: "KMNO-USD",   ev: 380, n: 0.532, casc: 2.14, hl: 22.0, cross: 0.091 },
+    { s: "PYTH-USD",   ev: 443, n: 0.498, casc: 1.99, hl: 19.8, cross: 0.093 },
+    { s: "WIF-USD",    ev: 403, n: 0.496, casc: 1.98, hl: 21.4, cross: 0.152 },
+    { s: "W-USD",      ev: 413, n: 0.480, casc: 1.92, hl: 13.3, cross: 0.050 }
+  ];
+
+  var CAPACITY = [
+    { n: 1000,     c: "cross-sectional", tr: 5146, g: -0.327, t: -0.10, cost: 45.99, net: -46.31 },
+    { n: 1000,     c: "directional",     tr: 9123, g: -1.388, t: -0.45, cost: 45.91, net: -47.30 },
+    { n: 10000,    c: "cross-sectional", tr: 5112, g: -0.975, t: -0.30, cost: 47.08, net: -48.06 },
+    { n: 10000,    c: "directional",     tr: 9071, g: -1.906, t: -0.61, cost: 46.69, net: -48.60 },
+    { n: 100000,   c: "cross-sectional", tr: 4217, g:  3.825, t:  1.04, cost: 44.29, net: -40.47 },
+    { n: 100000,   c: "directional",     tr: 7525, g:  1.415, t:  0.41, cost: 43.95, net: -42.53 },
+    { n: 1000000,  c: "cross-sectional", tr: 2735, g:  1.107, t:  0.21, cost: 36.58, net: -35.47 },
+    { n: 1000000,  c: "directional",     tr: 4776, g:  1.832, t:  0.44, cost: 36.14, net: -34.31 },
+    { n: 10000000, c: "cross-sectional", tr: 1248, g: -3.759, t: -0.50, cost: 32.38, net: -36.14 },
+    { n: 10000000, c: "directional",     tr: 2130, g: -1.240, t: -0.20, cost: 32.32, net: -33.57 }
+  ];
+
+  var NS = "http://www.w3.org/2000/svg";
+  function el(name, attrs, text) {
+    var e = document.createElementNS(NS, name);
+    for (var k in attrs) { if (attrs[k] !== null) e.setAttribute(k, attrs[k]); }
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+  function money(v) {
+    if (v >= 1e6) return "$" + (v / 1e6).toFixed(1) + "m";
+    if (v >= 1e3) return "$" + Math.round(v / 1e3) + "k";
+    return "$" + Math.round(v);
+  }
+
+  var tip = document.getElementById("tip");
+  function bindTip(node, text) {
+    node.addEventListener("mousemove", function (e) {
+      tip.textContent = text;
+      tip.style.left = e.clientX + "px";
+      tip.style.top = e.clientY + "px";
+      tip.style.opacity = "1";
+    });
+    node.addEventListener("mouseleave", function () { tip.style.opacity = "0"; });
+  }
+
+  /* ---- chart 1: lead-lag by liquidity ---- */
+  (function () {
+    var svg = document.getElementById("chart-leadlag");
+    var W = 720, rowH = 33, top = 32, left = 152, right = 56;
+    var plotW = W - left - right;
+    var max = 0.115;
+    var x = function (v) { return left + (v / max) * plotW; };
+
+    [0, 0.025, 0.05, 0.075, 0.1].forEach(function (g) {
+      svg.appendChild(el("line", { x1: x(g), x2: x(g), y1: top - 12, y2: top + LEADLAG.length * rowH - 8,
+        class: g === 0 ? "zeroline" : "gridline" }));
+      svg.appendChild(el("text", { x: x(g), y: top - 18, "text-anchor": "middle", class: "ax-label" }, g.toFixed(3)));
+    });
+
+    LEADLAG.forEach(function (d, i) {
+      var y = top + i * rowH;
+      var g = el("g", { class: "bar" });
+      g.appendChild(el("rect", { x: x(0), y: y, width: Math.max(x(d.l1) - x(0), 1.5), height: 15,
+        rx: 3, fill: "var(--teal)" }));
+      g.appendChild(el("text", { x: left - 12, y: y + 6, "text-anchor": "end",
+        "dominant-baseline": "middle", class: "row-label" }, d.s.replace("-USD", "")));
+      g.appendChild(el("text", { x: left - 12, y: y + 21, "text-anchor": "end", class: "row-sub" }, money(d.adv) + "/bar"));
+      g.appendChild(el("text", { x: x(d.l1) + 9, y: y + 8, "dominant-baseline": "middle",
+        class: "val-label" }, d.l1.toFixed(3)));
+      bindTip(g, d.s + "\nlag-1  " + d.l1.toFixed(4) + "   t = " + d.t.toFixed(2)
+        + "\nlag-0  " + d.l0.toFixed(4) + "\nreverse " + d.rev.toFixed(4)
+        + "\nADV " + money(d.adv) + "/bar");
+      svg.appendChild(g);
+    });
+
+    svg.appendChild(el("text", { x: left, y: top + LEADLAG.length * rowH + 20, class: "ax-label" },
+      "lag-1 correlation with SOL-USD  →  more liquid at top"));
+  })();
+
+  /* ---- chart 2: ablation ---- */
+  (function () {
+    var svg = document.getElementById("chart-ablation");
+    var W = 720, rowH = 36, top = 34, left = 190, right = 70;
+    var plotW = W - left - right;
+    var lo = -2, hi = 12;
+    var x = function (v) { return left + ((v - lo) / (hi - lo)) * plotW; };
+
+    [-2, 0, 2, 4, 6, 8, 10, 12].forEach(function (g) {
+      svg.appendChild(el("line", { x1: x(g), x2: x(g), y1: top - 14, y2: top + ABLATION.length * rowH - 12,
+        class: g === 0 ? "zeroline" : "gridline" }));
+      svg.appendChild(el("text", { x: x(g), y: top - 20, "text-anchor": "middle", class: "ax-label" },
+        (g > 0 ? "+" : "") + g));
+    });
+
+    ABLATION.forEach(function (d, i) {
+      var y = top + i * rowH;
+      var col = d.cap ? "var(--teal)" : "var(--amber)";
+      var x0 = x(Math.min(0, d.bp)), x1 = x(Math.max(0, d.bp));
+      var g = el("g", { class: "bar" });
+      g.appendChild(el("rect", { x: x0, y: y, width: Math.max(x1 - x0, 2), height: 17, rx: 3, fill: col }));
+      g.appendChild(el("text", { x: left - 14, y: y + 9, "text-anchor": "end",
+        "dominant-baseline": "middle", class: "row-label" }, d.v));
+      var lx = d.bp >= 0 ? x1 + 10 : x0 - 10;
+      g.appendChild(el("text", { x: lx, y: y + 9, "dominant-baseline": "middle",
+        "text-anchor": d.bp >= 0 ? "start" : "end", class: "val-label" },
+        (d.bp > 0 ? "+" : "") + d.bp.toFixed(2)));
+      bindTip(g, d.v + "\ngross  " + (d.bp > 0 ? "+" : "") + d.bp.toFixed(2) + " bp"
+        + "\nclustered t = " + (d.t > 0 ? "+" : "") + d.t.toFixed(2)
+        + "\ncapacity limit " + (d.cap ? "enforced" : "REMOVED"));
+      svg.appendChild(g);
+    });
+
+    svg.appendChild(el("text", { x: left, y: top + ABLATION.length * rowH + 16, class: "ax-label" },
+      "gross basis points per trade"));
+  })();
+
+  /* ---- tables ---- */
+  function cell(row, text, cls) {
+    var td = document.createElement("td");
+    if (cls) td.className = cls;
+    if (text instanceof Node) td.appendChild(text); else td.textContent = text;
+    row.appendChild(td);
+  }
+
+  var tb1 = document.getElementById("tbody-leadlag");
+  LEADLAG.forEach(function (d) {
+    var tr = document.createElement("tr");
+    cell(tr, d.s.replace("-USD", ""));
+    cell(tr, money(d.adv));
+    var span = document.createElement("span");
+    span.className = "tier"; span.textContent = d.tier;
+    cell(tr, span);
+    cell(tr, d.l0.toFixed(4));
+    cell(tr, d.l1.toFixed(4), d.t > 2 ? "pos" : null);
+    cell(tr, d.t.toFixed(2));
+    cell(tr, d.rev.toFixed(4));
+    cell(tr, d.cost.toFixed(1) + " bp", d.cost > 60 ? "neg" : null);
+    tb1.appendChild(tr);
+  });
+
+  var tb2 = document.getElementById("tbody-capacity");
+  CAPACITY.forEach(function (d) {
+    var tr = document.createElement("tr");
+    cell(tr, money(d.n));
+    cell(tr, d.c);
+    cell(tr, d.tr.toLocaleString());
+    cell(tr, (d.g > 0 ? "+" : "") + d.g.toFixed(2));
+    cell(tr, (d.t > 0 ? "+" : "") + d.t.toFixed(2));
+    cell(tr, d.cost.toFixed(1));
+    cell(tr, d.net.toFixed(1), "neg");
+    tb2.appendChild(tr);
+  });
+
+  var tb3 = document.getElementById("tbody-hawkes");
+  HAWKES.forEach(function (d) {
+    var tr = document.createElement("tr");
+    cell(tr, d.s.replace("-USD", ""));
+    cell(tr, d.ev);
+    cell(tr, d.n.toFixed(3), d.n > 0.75 ? "neg" : null);
+    cell(tr, d.casc.toFixed(2));
+    cell(tr, d.hl.toFixed(1));
+    cell(tr, d.cross.toFixed(3));
+    tb3.appendChild(tr);
+  });
+})();
+</script>
