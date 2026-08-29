@@ -77,18 +77,34 @@ def cmd_fetch(args) -> int:
 def cmd_research(args) -> int:
     cfg = _config(args)
     panel = _load_panel(cfg, refresh=not args.no_refresh)
-    from statarb.features.returns import log_returns
+    from statarb.data.sessions import mask_cross_session  # noqa: PLC0415
+    from statarb.features.returns import log_returns  # noqa: PLC0415
 
-    lr = log_returns(panel.close)
+    # Mask returns spanning a session boundary, exactly as the model does. Measuring
+    # the diagnostic on raw close-to-close would fold in overnight gaps and report a
+    # different, and in equities oppositely signed, coefficient from the one traded.
+    lr = mask_cross_session(log_returns(panel.close), panel.sessions)
 
     if args.topic == "leadlag":
-        from statarb.features.leadlag import cross_correlation
+        from statarb.features.leadlag import cross_correlation  # noqa: PLC0415
 
         table = cross_correlation(lr[panel.leader], lr[list(panel.followers)], max_lag=3)
-        print(table.sort_values("lag1", ascending=False).round(4).to_string())
+        adv = average_dollar_volume(panel.close, panel.volume, cfg.signal.beta_window).mean()
+        table["adv_per_bar"] = adv
+        table = table.sort_values("adv_per_bar", ascending=False)
+        print(table.round(4).to_string())
+        n_sig = int((table["t_lag1"] > 2).sum())
+        half = max(len(table) // 2, 1)
+        liquid = table["lag1"].iloc[:half].mean()
+        illiquid = table["lag1"].iloc[half:].mean()
         print(
-            "\nlag1 rising as liquidity falls, with reverse causality near zero, is the "
-            "signature of a genuine lead-lag rather than simple co-movement."
+            f"\n{n_sig}/{len(table)} followers significant at t > 2 "
+            f"| liquid half mean lag1 {liquid:+.4f} vs illiquid half {illiquid:+.4f}"
+        )
+        print(
+            "A lead-lag that strengthens as liquidity falls, with reverse causality near "
+            "zero, is the signature of stale pricing rather than simple co-movement. "
+            "A flat gradient means the signal is not concentrated in unfillable names."
         )
     elif args.topic == "hawkes":
         from statarb.models.hawkes import fit_bivariate_hawkes, fit_hawkes, jump_events
